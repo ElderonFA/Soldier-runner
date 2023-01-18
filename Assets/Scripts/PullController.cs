@@ -6,7 +6,6 @@ using Random = UnityEngine.Random;
 
 public class PullController : MonoBehaviour
 {
-    //public Action<Transform> respawnPulled;
     public static Action<IPulled> respawnPulled;
     void Start()
     {
@@ -20,20 +19,13 @@ public class PullController : MonoBehaviour
 
         foreach (var pulled in pulledObject)
         {
-            switch (pulled.PulledType)
-            {
-                case PulledType.Enemy:
-                    transform.position = GeneratePositionWithType(PulledType.Enemy);
+            var type = pulled.PulledType;
+            pulled.transform.position = GeneratePositionWithType(type);
             
-                    if (TryGetComponent(out MoveObject move))
-                    {
-                        move.RandomizeSpeed();
-                    }
-                    break;
-                
-                case PulledType.Tree:
-                    transform.position = GeneratePositionWithType(PulledType.Tree);
-                    break;
+            if (type == PulledType.Enemy 
+            &&  TryGetComponent(out MoveObject move))
+            {
+                move.RandomizeSpeed();
             }
         }
     }
