@@ -1,38 +1,44 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class PullController : MonoBehaviour
 {
+    [SerializeField] 
+    private List<PulledObjectConfig> pulledPrefabConfigs;
+
+    private List<IPulled> allPulledObjects;
+    
     public static Action<IPulled> respawnPulled;
-    void Start()
+    
+    void Awake()
     {
         StartSpawnPulledObject();
-        respawnPulled += RespawnOnePulled;
+        respawnPulled += RespawnPulled;
     }
 
     private void StartSpawnPulledObject()
     {
-        var pulledObject = FindObjectsOfType<IPulled>();
-
-        foreach (var pulled in pulledObject)
+        foreach (var config in pulledPrefabConfigs)
         {
-            var type = pulled.PulledType;
-            pulled.transform.position = GeneratePositionWithType(type);
-            
-            if (type == PulledType.Enemy 
-            &&  TryGetComponent(out MoveObject move))
+            for (var i = 0; i < config.counts; i++)
             {
-                move.RandomizeSpeed();
+                var obj = Instantiate(config.pulledPrefab);
+                
+                var iPulledComponent = obj.GetComponentInChildren<IPulled>();
+                iPulledComponent.Spawn(GeneratePositionWithType(iPulledComponent.PulledType));
+                
+                //allPulledObjects.Add(iPulledComponent);
             }
         }
     }
-
-    private void RespawnOnePulled(IPulled pulled)
+    
+    private void RespawnPulled(IPulled pulled)
     {
-        pulled.transform.position = GeneratePositionWithType(pulled.PulledType);
+        pulled.Spawn(GeneratePositionWithType(pulled.PulledType));
     }
 
     private Vector3 GeneratePositionWithType(PulledType pulledType)
@@ -43,4 +49,11 @@ public class PullController : MonoBehaviour
             PulledType.Tree => new Vector3(Random.Range(0, 2) == 0 ? 9f : -9f, 0f, Random.Range(20f, 60f)),
         };
     }
+}
+
+[Serializable]
+public class PulledObjectConfig
+{
+    public GameObject pulledPrefab;
+    public int counts;
 }
